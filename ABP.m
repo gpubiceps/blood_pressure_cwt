@@ -77,9 +77,9 @@ varargout{1} = handles.output;
 function slider1_Callback(hObject, eventdata, handles)
 global Fs pressure avg_pr_x avg_pr_y A B C D file;
 
-checkbox = get(handles.checkbox1,'Value'); % Значение чекбокса
-slider = get(handles.slider1,'Value'); % Значение ползунка
-window = get(handles.edit2,'string'); % Ширина окна
+checkbox = get(handles.checkbox1,'Value'); % Checkbox value
+slider = get(handles.slider1,'Value'); % Slider value
+window = get(handles.edit2,'string'); % Window width
 window = str2double(window);
 len_signal = length(pressure);
 
@@ -88,7 +88,7 @@ right_bound = left_bound+window*Fs - 1;
 
 T = 1/Fs;
 tmax = right_bound/Fs;
-t = left_bound/Fs:T:tmax; % Переменная времени
+t = left_bound/Fs:T:tmax; % Time variable
 
 axes(handles.axes1);
 cla('reset');
@@ -103,7 +103,7 @@ ylim([y_min y_max])
 grid on
 hold on
 
-% Построение диастолы
+% Diastole construction
 index_start = find(A >= left_bound, 1, 'first');
 index_stop = find(A <= right_bound, 1, 'last');
 peaks_index = A(index_start: index_stop);
@@ -111,10 +111,10 @@ peaks_t = peaks_index./Fs;
 for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
-% Среднее диастолическое давление
+% Mean diastolic pressure
 mean_dia = mean(pressure(A(index_start: index_stop)));
 
-% Построение систолы
+% Construction of systole
 index_start = find(B >= left_bound, 1, 'first');
 index_stop = find(B <= right_bound, 1, 'last');
 peaks_index = B(index_start: index_stop);
@@ -122,10 +122,10 @@ peaks_t = peaks_index./Fs;
 for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
-% Среднее систолическое давление
+% Mean systolic pressure
 mean_sist = mean(pressure(B(index_start: index_stop)));
 
-% Построение дикротического зубца
+% Construction of a dicrotic tooth
 index_start = find(C >= left_bound, 1, 'first');
 index_stop = find(C <= right_bound, 1, 'last');
 peaks_index = C(index_start: index_stop);
@@ -134,7 +134,7 @@ for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
 
-% Построение дикротического пика
+% Building a dicrotic peak
 index_start = find(D >= left_bound, 1, 'first');
 index_stop = find(D <= right_bound, 1, 'last');
 peaks_index = D(index_start: index_stop);
@@ -148,16 +148,16 @@ index_stop = find(avg_pr_x <= right_bound, 1, 'last');
 slice_pulse = avg_pr_x(index_start: index_stop);
 slice_pulse_t = slice_pulse./Fs;
 slice_pulse_ampl = avg_pr_y(index_start: index_stop);
-% Среднее пульсовое давление
+% Average pulse pressure
 mean_pul = mean(slice_pulse_ampl);
 if checkbox == 1
     plot(slice_pulse_t, slice_pulse_ampl, 'r--');
 end
 
-% Частота пульса
+% Heart rate
 BPM = length(B)/(length(pressure)/Fs)*60;
 
-%Заполнение таблицы
+% Populating the table
 param = [{round(mean_sist)} {'115 - 140'};
     {round(mean_dia)} {'75 - 90'};
     {round(mean_pul)} {'40 - 50'};
@@ -186,15 +186,15 @@ global Fs pressure avg_pr_x avg_pr_y A B C D file;
 file = uigetfile('*.mat');
 pressure = load(file);
 pressure = pressure.val;
-Gain = 11.91; % Усиление
-Baseline = -1227; % Нулевая линия
-pressure = (pressure(70:350000) - Baseline)/Gain; % Нормирование по усилению и нулевой линии
+Gain = 11.91; % Gain
+Baseline = -1227; % Zero line
+pressure = (pressure(70:350000) - Baseline)/Gain; % Gain and zero line normalization
 
-Fs = get(handles.edit1,'string'); % Частота дискретизации
+Fs = get(handles.edit1,'string'); % Sampling frequency
 Fs = str2double(Fs);
 
-slider = get(handles.slider1,'Value'); % Значение ползунка
-window = get(handles.edit2,'string'); % Ширина окна
+slider = get(handles.slider1,'Value'); % Slider value
+window = get(handles.edit2,'string'); % Window width
 window = str2double(window);
 len_signal = length(pressure);
 
@@ -203,15 +203,15 @@ right_bound = left_bound+window*Fs;
 
 T = 1/Fs;
 tmax = right_bound/Fs;
-t = left_bound/Fs:T:tmax; % Переменная времени
+t = left_bound/Fs:T:tmax; % Time variable
 
-n = 2; % Порядок фильтра
-fc = 20; % Частота среза
-Wn = fc*2/Fs; % Нормирование частоты среза
-[b, a] = butter(n, Wn); % Коэффициенты фильтра Баттерворта
-pressure = filtfilt(b, a, pressure); % Фильтрация в две стороны для устранения временной задержки
+n = 2; % Filter order
+fc = 20; % Cutoff frequency
+Wn = fc*2/Fs; % Cutoff frequency normalization
+[b, a] = butter(n, Wn); % Butterworth filter coefficients
+pressure = filtfilt(b, a, pressure); % Two-way filtering to eliminate time lag
 
-% График
+% Plot
 axes(handles.axes1);
 plot(t, pressure(left_bound:right_bound), 'b');
 xlabel('t, c');
@@ -224,12 +224,12 @@ ylim([y_min y_max])
 grid on
 hold on
 
-% Непрерывное вейвлет преобразование для выделения характерных точек
-name = 'sym6'; % Название вейвлета
-scale = 120; % Масштаб вейвлета, который выбирался исходя из скейлограммы
-wt = cwt(pressure, scale, name); % Непрерывное вейвлет преобразование
+% Continuous wavelet transform to highlight keypoints
+name = 'sym6'; % Wavelet name
+scale = 120; % The scale of the wavelet, which was selected based on the scaleogram
+wt = cwt(pressure, scale, name); % Continuous wavelet transform
 
-% Поиск пересечений с нулем коэффициентов НВП
+% Finding zero intersections of CWT coefficients
 A = [];
 C_bad = [];
 
@@ -241,7 +241,7 @@ for i=1:length(wt)-1
     end
 end
 
-% Нахождение локальных максимумов сигнала
+% Finding the local maxima of the signal
 B = [];
 D = [];
 
@@ -266,7 +266,7 @@ for i=1:length(C_bad)
     end
 end
 
-% Уточнение дикротического зубца
+% Refinement of a dicrotic wave
 C = [];
 for i=1:length(B)
     for j=B(i):B(i)+Fs-2
@@ -280,7 +280,7 @@ for i=1:length(B)
     end
 end
 
-% Рассчет среднего давления
+% Average pressure calculation
 avg_pr_y = [];
 avg_pr_x = [];
 for i=1:length(B)
@@ -288,8 +288,8 @@ for i=1:length(B)
     avg_pr_x(end+1) = B(i);
 end
 
-% Построение пульсового давления
-checkbox = get(handles.checkbox1,'Value'); % Значение чекбокса
+% Pulse pressure construction
+checkbox = get(handles.checkbox1,'Value'); % Checkbox value
 
 
 index_start = find(avg_pr_x >= left_bound, 1, 'first');
@@ -300,10 +300,10 @@ slice_pulse_ampl = avg_pr_y(index_start: index_stop);
 if checkbox == 1
     plot(slice_pulse_t, slice_pulse_ampl, 'r--');
 end
-% Среднее пульсовое давление
+% Average pulse pressure
 mean_pul = mean(slice_pulse_ampl);
 
-% Построение диастолы
+% Diastole construction
 index_start = find(A >= left_bound, 1, 'first');
 index_stop = find(A <= right_bound, 1, 'last');
 peaks_index = A(index_start: index_stop);
@@ -311,10 +311,10 @@ peaks_t = peaks_index./Fs;
 for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
-% Среднее диастолическое давление
+% Mean diastolic pressure
 mean_dia = mean(pressure(A(index_start: index_stop)));
 
-% Построение систолы
+% Construction of systole
 index_start = find(B >= left_bound, 1, 'first');
 index_stop = find(B <= right_bound, 1, 'last');
 peaks_index = B(index_start: index_stop);
@@ -322,10 +322,10 @@ peaks_t = peaks_index./Fs;
 for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
-% Среднее систолическое давление
+% Mean systolic pressure
 mean_sist = mean(pressure(B(index_start: index_stop)));
 
-% Построение дикротического зубца
+% Construction of a dicrotic tooth
 index_start = find(C >= left_bound, 1, 'first');
 index_stop = find(C <= right_bound, 1, 'last');
 peaks_index = C(index_start: index_stop);
@@ -334,7 +334,7 @@ for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
 
-% Построение дикротического пика
+% Building a dicrotic peak
 index_start = find(D >= left_bound, 1, 'first');
 index_stop = find(D <= right_bound, 1, 'last');
 peaks_index = D(index_start: index_stop);
@@ -343,10 +343,10 @@ for i=1:length(peaks_t)
     plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
 end
 
-% Частота пульса
+% Heart rate
 BPM = length(B)/(length(pressure)/Fs)*60;
 
-%Заполнение таблицы
+% Populating the table
 param = [{round(mean_sist)} {'115 - 140'};
     {round(mean_dia)} {'75 - 90'};
     {round(mean_pul)} {'40 - 50'};
@@ -406,9 +406,9 @@ function checkbox1_Callback(hObject, eventdata, handles)
 % Построение пульсового давления
 global Fs pressure avg_pr_x avg_pr_y A B C D file;
 
-checkbox = get(handles.checkbox1,'Value'); % Значение чекбокса
-slider = get(handles.slider1,'Value'); % Значение ползунка
-window = get(handles.edit2,'string'); % Ширина окна
+checkbox = get(handles.checkbox1,'Value'); % Checkbox value
+slider = get(handles.slider1,'Value'); % Slider value
+window = get(handles.edit2,'string'); % Window width
 window = str2double(window);
 len_signal = length(pressure);
 
@@ -429,7 +429,7 @@ else
     
     T = 1/Fs;
     tmax = right_bound/Fs;
-    t = left_bound/Fs:T:tmax; % Переменная времени
+    t = left_bound/Fs:T:tmax; % Time variable
     axes(handles.axes1);
     plot(t, pressure(left_bound:right_bound), 'b');
     xlabel('t, c');
@@ -441,7 +441,7 @@ else
     ylim([y_min y_max])
     grid on
     hold on
-    % Построение диастолы
+    % Diastole construction
     index_start = find(A >= left_bound, 1, 'first');
     index_stop = find(A <= right_bound, 1, 'last');
     peaks_index = A(index_start: index_stop);
@@ -450,7 +450,7 @@ else
         plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
     end
 
-    % Построение диастолы
+    % Diastole construction
     index_start = find(B >= left_bound, 1, 'first');
     index_stop = find(B <= right_bound, 1, 'last');
     peaks_index = B(index_start: index_stop);
@@ -459,7 +459,7 @@ else
         plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
     end
 
-    % Построение дикротического зубца
+    % Construction of a dicrotic tooth
     index_start = find(C >= left_bound, 1, 'first');
     index_stop = find(C <= right_bound, 1, 'last');
     peaks_index = C(index_start: index_stop);
@@ -468,7 +468,7 @@ else
         plot(peaks_t(i), pressure(peaks_index(i)), 'o', 'MarkerSize', 5, 'Color', 'k');
     end
 
-    % Построение дикротического пика
+    % Building a dicrotic peak
     index_start = find(D >= left_bound, 1, 'first');
     index_stop = find(D <= right_bound, 1, 'last');
     peaks_index = D(index_start: index_stop);
